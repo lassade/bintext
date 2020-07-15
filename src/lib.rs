@@ -38,13 +38,12 @@ pub enum DecodeError {
 fn de(input: &str) -> Result<Vec<u8>, DecodeError> {
     use DecodeError::*;
 
-    let input = input.as_bytes();
+    let p = input.as_bytes();
     let l = input.len();
     if l & 1 != 0 { Err(OddLength)? }
 
     let mut i = 0;
     let mut v = alloc(l >> 1);
-    let p = input.as_bytes();
     for b in v.iter_mut() {
         unsafe {
             let msn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i) as usize);
