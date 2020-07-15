@@ -23,14 +23,9 @@ const HEX_NIBBLE_DECODE: [u8; 256] = [
 
 /// Allocates `Vec<u8>` of a given length with uninialized data
 fn alloc(length: usize) -> Vec<u8> {
-    // Create a vec with a capacity, take a pointer to the allocated memory,
-    // then forget the initial vec while returing one with a proper length seted
-    let v = Vec::with_capacity(length);
-    let mut v = std::mem::ManuallyDrop::new(v);
-    let ptr = v.as_mut_ptr();
-    unsafe {
-        Vec::from_raw_parts(ptr, length, length)
-    }
+    let mut v = Vec::with_capacity(length);
+    unsafe { v.set_len(length); }
+    v
 }
 
 #[derive(Debug)]
@@ -48,16 +43,16 @@ fn de(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     let mut i = 0;
     let mut v = alloc(l >> 1);
-    let c = input.as_bytes();
-    while i < l {
+    let p = input.as_bytes();
+    for b in v.iter_mut() {
         unsafe {
-            let u = *HEX_NIBBLE_DECODE.get_unchecked(*c.get_unchecked(i) as usize);
-            if u > 0xf { Err(InvalidCharAt(i))? }
+            let msn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i) as usize);
+            if msn > 0xf { Err(InvalidCharAt(i))? }
 
-            let l = *HEX_NIBBLE_DECODE.get_unchecked(*c.get_unchecked(i | 1) as usize);
-            if l > 0xf { Err(InvalidCharAt(i | 1))? }
+            let lsn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i | 1) as usize);
+            if lsn > 0xf { Err(InvalidCharAt(i | 1))? }
 
-            *v.get_unchecked_mut(i >> 1) = (u << 4) | l;
+            *b = (msn << 4) | lsn;
             i += 2;
         }
     }
