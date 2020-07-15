@@ -103,3 +103,21 @@ pub fn encode(input: &[u8]) -> String {
         String::from_utf8_unchecked(v)
     }
 }
+
+
+// const HEX_ENCODE_LITE: [u8; 16] = *b"0123456789abcdef";
+
+// /// Smaller memory and code foot print but ~8% slower
+// pub fn encode_lite(input: &[u8]) -> String {
+//     let mut i = 0usize;
+//     let mut v = alloc(input.len() << 1);
+//     unsafe { 
+//         for b in input {
+//             let b = *b as usize;
+//             *v.get_unchecked_mut(i) = *HEX_ENCODE.get_unchecked(b >> 4);
+//             *v.get_unchecked_mut(i | 1) = *HEX_ENCODE.get_unchecked(b & 0xf);
+//             i += 2;
+//         }
+//         String::from_utf8_unchecked(v)
+//     }
+// }
