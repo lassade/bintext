@@ -1,3 +1,10 @@
+/// Allocates `Vec<u8>` of a given length with uninialized data
+fn alloc(length: usize) -> Vec<u8> {
+    let mut v = Vec::with_capacity(length);
+    unsafe { v.set_len(length); }
+    v
+}
+
 /// Invalid nibble
 const I: u8 = 255;
 
@@ -21,13 +28,6 @@ const HEX_NIBBLE_DECODE: [u8; 256] = [
     I,   I,   I,   I,   I,   I,   I,   I,   I,   I,  I,  I,  I,  I,  I,  I
 ];
 
-/// Allocates `Vec<u8>` of a given length with uninialized data
-fn alloc(length: usize) -> Vec<u8> {
-    let mut v = Vec::with_capacity(length);
-    unsafe { v.set_len(length); }
-    v
-}
-
 #[derive(Debug)]
 pub enum DecodeError {
     OddLength,
@@ -38,6 +38,7 @@ pub enum DecodeError {
 fn de(input: &str) -> Result<Vec<u8>, DecodeError> {
     use DecodeError::*;
 
+    let input = input.as_bytes();
     let l = input.len();
     if l & 1 != 0 { Err(OddLength)? }
 
