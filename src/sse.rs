@@ -3,13 +3,28 @@ use std::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-use crate::HEX_ENCODE;
+use crate::{DecodeError, HEX_ENCODE};
+
+const I: u8 = 255;
+const HEX_DECODE_64LUT_X30_1: i64 = i64::from_be_bytes([0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]);
+const HEX_DECODE_64LUT_X30_0: i64 = i64::from_be_bytes([0x8, 0x9,   I,   I,   I,   I,   I,   I]); // [0-9]
+const HEX_DECODE_64LUT_X40_1: i64 = i64::from_be_bytes([  I, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,   I]); // [a-z]
+const HEX_DECODE_64LUT_X60_1: i64 = i64::from_be_bytes([  I, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,   I]); // [A-Z]
+
+#[inline(always)]
+pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
+    let _lut_x30 = _mm_set_epi64x(HEX_DECODE_64LUT_X30_1, HEX_DECODE_64LUT_X30_0);
+    let _lut_x40 = _mm_set_epi64x(HEX_DECODE_64LUT_X40_1, -1);
+    let _lut_x60 = _mm_set_epi64x(HEX_DECODE_64LUT_X60_1, -1);
+
+    todo!()
+}
 
 // (L) least (M) more significant mibble masks
 const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
 const LN_MASK: i32 = 0x0F0F0F0F;
-const HEX_ENCODE_64LUT_1 : i64 = i64::from_be_bytes(*b"fedcba98");
-const HEX_ENCODE_64LUT_0 : i64 = i64::from_be_bytes(*b"76543210");
+const HEX_ENCODE_64LUT_1: i64 = i64::from_be_bytes(*b"fedcba98");
+const HEX_ENCODE_64LUT_0: i64 = i64::from_be_bytes(*b"76543210");
 
 #[inline(always)]
 pub unsafe fn encode(input: &[u8]) -> String {

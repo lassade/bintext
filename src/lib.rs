@@ -56,44 +56,35 @@ pub enum DecodeError {
     InvalidCharAt(usize),
 }
 
-#[inline(always)]
-fn de(input: &str) -> Result<Vec<u8>, DecodeError> {
-    use DecodeError::*;
-
-    let p = input.as_bytes();
-    let l = input.len();
-    if l & 1 != 0 { Err(OddLength)? }
-
-    let mut i = 0;
-    let mut v = alloc(l >> 1);
-    for b in v.iter_mut() {
-        unsafe {
-            let msn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i) as usize);
-            if msn > 0xf { Err(InvalidCharAt(i))? }
-
-            let lsn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i | 1) as usize);
-            if lsn > 0xf { Err(InvalidCharAt(i | 1))? }
-
-            *b = (msn << 4) | lsn;
-            i += 2;
-        }
-    }
-
-    Ok(v)
-}
-
 /// Fast hex string decode. No error description is provided
 #[no_mangle]
 pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
-    de(input).map_err(|_| ())
+    #[cfg(
+        all(
+            any(target_arch = "x86", target_arch = "x86_64"),
+            target_feature = "sse2",
+        )
+    )]
+    return unsafe { sse::decode(input).map_err(|_| ()) };
+
+    fallback::decode(input).map_err(|_| ())
 }
 
 /// Decodes an hex string with all error messages, useful when dealing with
 /// recoverable code logic or when a error message is required to facilitate
 /// user action.
 #[no_mangle]
+#[allow(unreachable_code)]
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
-    de(input)
+    #[cfg(
+        all(
+            any(target_arch = "x86", target_arch = "x86_64"),
+            target_feature = "sse2",
+        )
+    )]
+    return unsafe { sse::decode(input) };
+
+    fallback::decode(input)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,5 +102,5 @@ pub fn encode(input: &[u8]) -> String {
     )]
     return unsafe { sse::encode(input) };
 
-    return fallback::encode(input);
+    fallback::encode(input)
 }
