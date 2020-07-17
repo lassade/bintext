@@ -60,7 +60,7 @@ pub enum DecodeError {
 #[no_mangle]
 pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    if is_x86_feature_detected!("sse2") {
+    if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3") {
         return unsafe { sse::decode(input).map_err(|_| ()) };
     }
 
@@ -74,7 +74,7 @@ pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
 #[allow(unreachable_code)]
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    if is_x86_feature_detected!("sse2") {
+    if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3") {
         return unsafe { sse::decode(input) };
     }
 
@@ -89,7 +89,7 @@ pub fn encode(input: &[u8]) -> String {
     // TODO: AVX implementation
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    if is_x86_feature_detected!("sse2") {
+    if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3")  {
         return unsafe { sse::encode(input) };
     }
 
