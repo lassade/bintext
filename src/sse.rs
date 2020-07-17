@@ -26,8 +26,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Constants
     let lutx3 = _mm_set_epi64x(HEX_DECODE_64LUT_X30_1, HEX_DECODE_64LUT_X30_0);
-    let lutx4 = _mm_set_epi64x(-1, HEX_DECODE_64LUT_AZ);
-    let lutx6 = _mm_set_epi64x(-1, HEX_DECODE_64LUT_AZ);
+    let lutx4 = _mm_set_epi64x(0, HEX_DECODE_64LUT_AZ);
+    let lutx6 = _mm_set_epi64x(0, HEX_DECODE_64LUT_AZ);
     
     let x30 = _mm_set1_epi8(0x30u8 as i8);
     let x3f = _mm_set1_epi8(0x3fu8 as i8);
