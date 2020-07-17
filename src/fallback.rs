@@ -40,3 +40,5 @@ pub fn encode(input: &[u8]) -> String {
         String::from_utf8_unchecked(v)
     }
 }
+
+crate::hex!(encode, decode);

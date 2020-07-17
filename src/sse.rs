@@ -216,3 +216,5 @@ pub unsafe fn encode(input: &[u8]) -> String {
         e << 3 // each i64 have 8 bytes)
     )
 }
+
+crate::hex!(encode, decode);

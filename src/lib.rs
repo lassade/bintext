@@ -1,6 +1,8 @@
 mod sse;
 mod fallback;
 
+mod tests;
+
 /// Invalid nibble
 const I: u8 = 255;
 
