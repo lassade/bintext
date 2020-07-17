@@ -59,13 +59,10 @@ pub enum DecodeError {
 /// Fast hex string decode. No error description is provided
 #[no_mangle]
 pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
-    #[cfg(
-        all(
-            any(target_arch = "x86", target_arch = "x86_64"),
-            target_feature = "sse2",
-        )
-    )]
-    return unsafe { sse::decode(input).map_err(|_| ()) };
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    if is_x86_feature_detected!("sse2") {
+        return unsafe { sse::decode(input).map_err(|_| ()) };
+    }
 
     fallback::decode(input).map_err(|_| ())
 }
@@ -76,13 +73,10 @@ pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
 #[no_mangle]
 #[allow(unreachable_code)]
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
-    #[cfg(
-        all(
-            any(target_arch = "x86", target_arch = "x86_64"),
-            target_feature = "sse2",
-        )
-    )]
-    return unsafe { sse::decode(input) };
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    if is_x86_feature_detected!("sse2") {
+        return unsafe { sse::decode(input) };
+    }
 
     fallback::decode(input)
 }
@@ -94,13 +88,10 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 pub fn encode(input: &[u8]) -> String {
     // TODO: AVX implementation
 
-    #[cfg(
-        all(
-            any(target_arch = "x86", target_arch = "x86_64"),
-            target_feature = "sse2",
-        )
-    )]
-    return unsafe { sse::encode(input) };
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    if is_x86_feature_detected!("sse2") {
+        return unsafe { sse::encode(input) };
+    }
 
     fallback::encode(input)
 }
