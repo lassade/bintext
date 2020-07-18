@@ -7,7 +7,7 @@ use std::arch::x86_64::*;
 
 use std::alloc::{alloc, Layout};
 use std::mem::align_of;
-use crate::*;
+use super::*;
 
 
 ///////////////////////////////////////////////////////////////////////////////

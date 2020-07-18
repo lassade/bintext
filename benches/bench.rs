@@ -161,11 +161,11 @@ fn cmp(c: &mut Criterion) {
         "from",
         |b, data| {
             let hex = hex::encode(&data);
-            assert_eq!(hex::decode(&hex).unwrap(), bintext::decode_no(&hex).unwrap());
+            assert_eq!(hex::decode(&hex).unwrap(), bintext::hex::decode_no(&hex).unwrap());
             b.iter_batched(
                 || &hex,
                 |value| {
-                    black_box(bintext::decode_no(value).unwrap())
+                    black_box(bintext::hex::decode_no(value).unwrap())
                 },
                 BatchSize::NumIterations(LEN as u64),
             )
@@ -173,11 +173,11 @@ fn cmp(c: &mut Criterion) {
         vec![bin.clone()],
     )
     .with_function("to", |b, data| {
-        assert_eq!(hex::encode(&data), bintext::encode(&data[..]));
+        assert_eq!(hex::encode(&data), bintext::hex::encode(&data[..]));
         b.iter_batched(
             || data,
             |value| {
-                black_box(bintext::encode(&value[..]))
+                black_box(bintext::hex::encode(&value[..]))
             },
             BatchSize::NumIterations(LEN as u64),
         )

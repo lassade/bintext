@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::{alloc, DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
+use super::{alloc, DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
 
 #[inline(always)]
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
