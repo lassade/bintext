@@ -1,7 +1,9 @@
 mod sse2;
+mod avx2;
 mod fallback;
 
 mod tests;
+mod support;
 
 /// Invalid nibble
 const I: u8 = 255;
@@ -26,6 +28,12 @@ const HEX_NIBBLE_DECODE: [u8; 256] = [
     I,   I,   I,   I,   I,   I,   I,   I,   I,   I,  I,  I,  I,  I,  I,  I
 ];
 
+// Inverted to make error handle works
+const N: u8 = 0;
+const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9,   N,   N,   N,   N,   N,   N]); // [0-9]
+const HEX_DECODE_64LUT_X30_0: i64 = i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
+const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([  N, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf,   N]); // [a-z] [A-Z]
+
 const HEX_ENCODE: [u8; 512] = 
     *b"000102030405060708090a0b0c0d0e0f\
        101112131415161718191a1b1c1d1e1f\
@@ -43,6 +51,13 @@ const HEX_ENCODE: [u8; 512] =
        d0d1d2d3d4d5d6d7d8d9dadbdcdddedf\
        e0e1e2e3e4e5e6e7e8e9eaebecedeeef\
        f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
+
+
+// (L) least (M) more significant mibble masks
+const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
+const LN_MASK: i32 = 0x0F0F0F0F;
+const HEX_ENCODE_64LUT_1: i64 = i64::from_be_bytes(*b"fedcba98");
+const HEX_ENCODE_64LUT_0: i64 = i64::from_be_bytes(*b"76543210");
 
 /// Allocates `Vec<u8>` of a given length with uninialized data
 #[inline(always)]

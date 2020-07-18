@@ -2,7 +2,7 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! tests_hex {
-    ($encode:path, $decode:path) => {
+    ($encode:path, $decode:path, $feat:path) => {
         #[cfg(test)]
         mod tests {
             const SAMPLES: [(&'static [u8], &'static str); 3] = [
@@ -15,6 +15,10 @@ macro_rules! tests_hex {
             #[test]
             #[allow(unused_unsafe)]
             fn encoding() {
+                if !$feat() {
+                    panic!("doesn't have the required instruction set");
+                }
+
                 for (input, expected) in SAMPLES.iter() {
                     let r = unsafe { $encode(input) };
                     assert_eq!(r, *expected);

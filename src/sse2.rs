@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
@@ -5,17 +7,11 @@ use std::arch::x86_64::*;
 
 use std::alloc::{alloc, Layout};
 use std::mem::align_of;
-use crate::{DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
+use crate::*;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
-// Inverted to make error handle works
-const I: u8 = 0;
-const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9,   I,   I,   I,   I,   I,   I]); // [0-9]
-const HEX_DECODE_64LUT_X30_0: i64 = i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
-const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([  I, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf,   I]); // [a-z] [A-Z]
 
 #[inline(always)]
 pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
@@ -38,7 +34,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     
     let m = _mm_set1_epi16(0x00FFu16 as i16);
     let idec = _mm_set_epi64x(0x0f_0d_0b_09_07_05_03_01u64 as i64, -1);
-    let tmpsll = _mm_set_epi64x(12, 12);
+    let tmpsll = _mm_set1_epi64x(12);
     
     // Input pointers
     let mut p = input.as_ptr() as *const i8;
@@ -132,19 +128,13 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-// (L) least (M) more significant mibble masks
-const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
-const LN_MASK: i32 = 0x0F0F0F0F;
-const HEX_ENCODE_64LUT_1: i64 = i64::from_be_bytes(*b"fedcba98");
-const HEX_ENCODE_64LUT_0: i64 = i64::from_be_bytes(*b"76543210");
-
 #[inline(always)]
 pub unsafe fn encode(input: &[u8]) -> String {
     // Constants
     let lut = _mm_set_epi64x(HEX_ENCODE_64LUT_1, HEX_ENCODE_64LUT_0);
     let umask = _mm_set1_epi32(MN_MASK);
     let lmask = _mm_set1_epi32(LN_MASK);
-    let srl = _mm_set_epi64x(4, 4);
+    let srl = _mm_set1_epi64x(4);
     
     let c = input.len();
     let mut p = input.as_ptr() as *const i8;
@@ -204,4 +194,13 @@ pub unsafe fn encode(input: &[u8]) -> String {
     String::from_raw_parts(v,e, e)
 }
 
-crate::tests_hex!(super::encode, super::decode);
+#[inline(always)]
+pub fn meet_requiriments() -> bool {
+    if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3")  {
+        return true;
+    }
+
+    return false;
+}
+
+crate::tests_hex!(super::encode, super::decode, super::meet_requiriments);

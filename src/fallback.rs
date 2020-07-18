@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::{alloc, DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
 
 #[inline(always)]
@@ -41,4 +43,10 @@ pub fn encode(input: &[u8]) -> String {
     }
 }
 
-crate::tests_hex!(super::encode, super::decode);
+#[inline(always)]
+#[allow(dead_code)]
+pub fn meet_requiriments() -> bool {
+    return true;
+}
+
+crate::tests_hex!(super::encode, super::decode, super::meet_requiriments);
