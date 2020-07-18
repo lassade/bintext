@@ -26,8 +26,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Constants
     let lutx3 = _mm_set_epi64x(HEX_DECODE_64LUT_X30_1, HEX_DECODE_64LUT_X30_0);
-    let lutx4 = _mm_set_epi64x(0, HEX_DECODE_64LUT_AZ);
-    let lutx6 = _mm_set_epi64x(0, HEX_DECODE_64LUT_AZ);
+    let lutx4and6 = _mm_set_epi64x(0, HEX_DECODE_64LUT_AZ);
     
     let x30 = _mm_set1_epi8(0x30u8 as i8);
     let x3f = _mm_set1_epi8(0x3fu8 as i8);
@@ -39,6 +38,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     let m = _mm_set1_epi16(0xFF00u16 as i16);
     let slb = _mm_set1_epi64x(0xfff as i64);
     let idec = _mm_set_epi64x(0x0f_0d_0b_09_07_05_03_01u64 as i64, -1);
+
+    let tmpsll = _mm_set_epi64x(12, 12);
     
     // Input pointers
     let mut p = input.as_ptr() as *const i8;
@@ -71,8 +72,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         
         // LUT sample
         let vx3 = _mm_shuffle_epi8(lutx3, ix3);
-        let vx4 = _mm_shuffle_epi8(lutx4, ix4);
-        let vx6 = _mm_shuffle_epi8(lutx6, ix6);
+        let vx4 = _mm_shuffle_epi8(lutx4and6, ix4);
+        let vx6 = _mm_shuffle_epi8(lutx4and6, ix6);
         
         // Aggregate results
         let dec = _mm_or_si128(
@@ -96,11 +97,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
             // Pick even bytes containing most significant nibbles
             let temp = _mm_or_si128(dec, m);
             
-            // Peform a 12 bit shift (sse doesn't have intrisicts for it)
-            let temp = _mm_set_epi64x(
-                ((_mm_extract_epi64(temp, 1) as u64) << 12) as i64,
-                ((_mm_extract_epi64(temp, 0) as u64) << 12) as i64,
-            );
+            // Peform a 12 bit shift
+            let temp = _mm_sll_epi64(temp, tmpsll);
             
             // NOTE: Set the lest significant 12 bit, cleared by prev left bit shift
             let temp = _mm_or_si128(temp, slb);
@@ -150,6 +148,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
     let lut = _mm_set_epi64x(HEX_ENCODE_64LUT_1, HEX_ENCODE_64LUT_0);
     let umask = _mm_set1_epi32(MN_MASK);
     let lmask = _mm_set1_epi32(LN_MASK);
+    let srl = _mm_set_epi64x(4, 4);
     
     let c = input.len();
     let mut p = input.as_ptr() as *const i8;
@@ -176,10 +175,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
         let mnibble = {
             let temp = _mm_and_si128(slice, umask);
             // shift left the most significant nibble
-            _mm_set_epi64x(
-                (_mm_extract_epi64(temp, 1) as u64 >> 4) as i64,
-                (_mm_extract_epi64(temp, 0) as u64 >> 4) as i64,
-            )
+            _mm_srl_epi64(temp, srl)
         };
         let lnibble = _mm_and_si128(slice, lmask);
         
