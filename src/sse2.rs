@@ -7,9 +7,8 @@ use std::alloc::{alloc, Layout};
 use std::mem::align_of;
 use crate::{DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
 
-// (L) least (M) more significant mibble masks
-const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
-const LN_MASK: i32 = 0x0F0F0F0F;
+
+///////////////////////////////////////////////////////////////////////////////
 
 
 // Inverted to make error handle works
@@ -89,6 +88,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         // return 0 which is not ok
         let ok = _mm_movemask_epi8(dec) as u32;
         if ok != 0xffff {
+            // TODO: Error index
             Err(InvalidCharAt(0))?
         }
         
@@ -129,6 +129,12 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+
+
+// (L) least (M) more significant mibble masks
+const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
+const LN_MASK: i32 = 0x0F0F0F0F;
 const HEX_ENCODE_64LUT_1: i64 = i64::from_be_bytes(*b"fedcba98");
 const HEX_ENCODE_64LUT_0: i64 = i64::from_be_bytes(*b"76543210");
 
