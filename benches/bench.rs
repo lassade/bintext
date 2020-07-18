@@ -23,8 +23,8 @@ impl fmt::Debug for Bytes {
 }
 
 fn cmp(c: &mut Criterion) {
-    //let core_ids = core_affinity::get_core_ids().unwrap();
-    //core_affinity::set_for_current(core_ids[0]);
+    let core_ids = core_affinity::get_core_ids().unwrap();
+    core_affinity::set_for_current(core_ids[0]);
 
     // Defines the tests to a wider range of byte slices
     let mut test_set = vec![];

@@ -14,6 +14,7 @@ documentation = "https://docs.rs/bintext/"
 # bench basic support
 rand = "0.7"
 criterion = "0.3"
+core_affinity = "0.5.10"
 
 # compasition
 hex = "0.4.2"
@@ -21,6 +22,7 @@ base16 = "0.2.1"
 faster-hex = "0.4.1"
 base64 = "0.12.3"
 radix64 = "0.6.2"
+
 
 [[bench]]
 name = "bench"
