@@ -3,6 +3,10 @@ name = "bintext"
 version = "0.1.0"
 authors = ["lassade <felipe.jorge.pereira@gmail.com>"]
 edition = "2018"
+description = "Encoder and decoder of binary data for hex or base64 (wip) with support for SSE and AVX"
+license = "MIT"
+documentation = "https://docs.rs/bintext/"
+#repository = "https://docs.rs/bintext/"
 
 [dependencies]
 
@@ -16,7 +20,7 @@ hex = "0.4.2"
 base16 = "0.2.1"
 faster-hex = "0.4.1"
 base64 = "0.12.3"
-b64-ct = "0.1.1"
+radix64 = "0.6.2"
 
 [[bench]]
 name = "bench"

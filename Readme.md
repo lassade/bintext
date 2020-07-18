@@ -1,15 +1,24 @@
-Simd Hex
+Bin Text
 =========
 
-Hex encoding and decoding with support for SIMD (avx2 and sse4) with good fallback peformance
+Hex and base64 (wip) encoding and decoding with support for SIMD (AVX2 and
+SSSE3) with good fallback peformance
 
-### Why
+### Why 
 
-* `hex` bad peformance, but smaller code size since doesn't realy on LUTs
-* `base16`, doesn't support SIMD, but have faster decoding and overal good encoding
-* `faster-hex` fastest encode (SSE4.1, AVX2), decode (AVX2) missing SSE4.1 impl hurt bad the peformance
+There is a lot of other crates that already does the job, but every single one
+have some kind of performance downside:
+
+* `hex` bad peformance, but smaller code size since doesn't rely on LUTs;
+* `base16`, no SIMD, but have faster decoding and overal good encoding;
+* `faster-hex` fastest encode using SSSE3 and AVX2, decode only AVX2 but is
+missing SSE implementation, which has the best SIMD coverage of all
+instructions sets.
+
+This crate provides implementations that covers all their competitors weaknesses.
+Just do `cargo bench`.
 
 ### Comparing with base64 encoding
 
-* `base64`, faster againts any hex impl that doesn't use SIMD
-* `b64_ct`, the worst
+* `base64`, faster againts any hex impl that doesn't use SIMD;
+* `radix64`, better decode but bit worse encoder than base64, avx enabled;

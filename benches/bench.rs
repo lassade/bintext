@@ -47,13 +47,13 @@ fn cmp(c: &mut Criterion) {
     .warm_up_time(WARM_UP_TIME)
     .measurement_time(MEASUREMENT_TIME));
 
-    c.bench("b64-ct", ParameterizedBenchmark::new(
+    c.bench("radix64", ParameterizedBenchmark::new(
         "from",
         |b, data| {
             b.iter_batched(
                 || base64::encode_config(&data[..], base64::URL_SAFE),
                 |value| {
-                    black_box(b64_ct::FromBase64::from_base64(value.as_bytes()).unwrap())
+                    black_box(radix64::URL_SAFE.decode(value.as_bytes()).unwrap())
                 },
                 BatchSize::NumIterations(LEN as u64),
             )
@@ -64,7 +64,7 @@ fn cmp(c: &mut Criterion) {
         b.iter_batched(
             || data,
             |value| {
-                black_box(b64_ct::ToBase64::to_base64(&value[..], b64_ct::URL_SAFE))
+                black_box(radix64::URL_SAFE.encode(&value[..]))
             },
             BatchSize::NumIterations(LEN as u64),
         )
