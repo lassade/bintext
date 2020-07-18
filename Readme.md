@@ -1,4 +1,4 @@
-Bin Text
+Bin Text (WIP)
 =========
 
 Hex and base64 (wip) encoding and decoding with support for SIMD (AVX2 and
@@ -15,8 +15,8 @@ have some kind of performance downside:
 missing SSE implementation, which has the best SIMD coverage of all
 instructions sets.
 
-This crate provides implementations that covers all their competitors weaknesses.
-Just do `cargo bench`.
+This crate provides implementations that covers all their competitors
+performance weaknesses. Just run `cargo bench`.
 
 ### Comparing with base64 encoding
 
