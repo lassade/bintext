@@ -41,4 +41,4 @@ pub fn encode(input: &[u8]) -> String {
     }
 }
 
-crate::hex!(encode, decode);
+crate::tests_hex!(super::encode, super::decode);

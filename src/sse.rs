@@ -3,6 +3,8 @@ use std::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+use std::alloc::{alloc, Layout};
+use std::mem::align_of;
 use crate::{DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
 
 // (L) least (M) more significant mibble masks
@@ -35,10 +37,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     let x5f = _mm_set1_epi8(0x5fu8 as i8);
     let x60 = _mm_set1_epi8(0x60u8 as i8);
     
-    let m = _mm_set1_epi16(0xFF00u16 as i16);
-    let slb = _mm_set1_epi64x(0xfff as i64);
+    let m = _mm_set1_epi16(0x00FFu16 as i16);
     let idec = _mm_set_epi64x(0x0f_0d_0b_09_07_05_03_01u64 as i64, -1);
-
     let tmpsll = _mm_set_epi64x(12, 12);
     
     // Input pointers
@@ -46,10 +46,9 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     let p_end = p.add(c);
     
     // Allocate chunks of 8 bytes with alignment of 8
-    let e = (c >> 1) >> 3;
-    let mut v = std::mem::ManuallyDrop::new(Vec::<i64>::with_capacity(e));
-    v.set_len(e);
-    let mut b = v.as_mut_ptr();
+    let e = c >> 1;
+    let v = alloc(Layout::from_size_align(e, align_of::<i64>()).unwrap());
+    let mut b = v as *mut i64;
 
     // Main loop loop
     while p.offset(15) < p_end {
@@ -95,14 +94,10 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         
         let dec = {
             // Pick even bytes containing most significant nibbles
-            let temp = _mm_or_si128(dec, m);
-            
+            let temp = _mm_andnot_si128(dec, m);
             // Peform a 12 bit shift
             let temp = _mm_sll_epi64(temp, tmpsll);
-            
-            // NOTE: Set the lest significant 12 bit, cleared by prev left bit shift
-            let temp = _mm_or_si128(temp, slb);
-            _mm_and_si128(temp, dec)
+            _mm_andnot_si128(temp, dec)
         };
         
         // Takes only odd bytes
@@ -130,12 +125,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         b = b.add(1);
     }
 
-    Ok(
-        Vec::from_raw_parts(
-            v.as_mut_ptr() as *mut u8, 
-            c >> 1, // use only the necessary ammount of bytes
-            e << 3 // each i64 have 8 bytes
-    ))
+    Ok(Vec::from_raw_parts(v, e, e))
 }
 
 
@@ -155,11 +145,10 @@ pub unsafe fn encode(input: &[u8]) -> String {
     let p_end = p.add(c);
     
     // Allocate chunks of 8 bytes with alignment of 8
-    let e = c >> 2; // * NOTE: each byte need two other bytes, hence shift left 2 bits
-    let mut v = std::mem::ManuallyDrop::new(Vec::<i64>::with_capacity(e));
-    v.set_len(e);
-
-    let mut b = v.as_mut_ptr();
+    // * NOTE: each byte need two other bytes, hence shift left 2 bits
+    let e = c << 1;
+    let v = alloc(Layout::from_size_align(e, align_of::<i64>()).unwrap());
+    let mut b = v as *mut i64;
 
     while p.offset(15) < p_end {
         // * NOTE: no measurable change when taking 2 u64 at the time instead of 16 u8
@@ -206,11 +195,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
         b = b.add(2);
     }
 
-    String::from_raw_parts(
-        v.as_mut_ptr() as *mut u8,
-        c << 1, // use only the necessary ammount of bytes
-        e << 3 // each i64 have 8 bytes)
-    )
+    String::from_raw_parts(v,e, e)
 }
 
-crate::hex!(encode, decode);
+crate::tests_hex!(super::encode, super::decode);
