@@ -9,6 +9,9 @@ use std::alloc::{alloc, Layout};
 use std::mem::align_of;
 use super::*;
 
+// TODO: These impl must be reviewed, since they are a lazy port
+// from the original SSE. The AVX2 set has some other instruction
+// thay may be useful in improving the peformance of this code
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +63,9 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Main loop loop
     while p.offset(31) < p_end {
+        // TODO: maybe using _mm256_maskload_epi32 or _mm256_maskload_epi64
+        // this will require the input memory be alinged with 4 or 8, witch can make
+        // things harder
         let slice = _mm256_set_epi8(
             *p.add(31), *p.add(30), *p.add(29), *p.add(28),
             *p.add(27), *p.add(26), *p.add(25), *p.add(24),
@@ -90,13 +96,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         let vx6 = _mm256_shuffle_epi8(lutx4and6, ix6);
         
         // Aggregate results
-        let dec = _mm256_or_si256(
-            _mm256_or_si256(
-                _mm256_and_si256(vx3, mx3),
-                _mm256_and_si256(vx4, mx4)
-            ),
-            _mm256_and_si256(vx6, mx6)
-        );
+        let dec = _mm256_blendv_epi8(_mm256_blendv_epi8(_mm256_and_si256(vx3, mx3), vx4, mx4), vx6, mx6);
         
         // NOTE: To make the error handling possible I inverted all
         // operations and constants of the algorithm, this way when
