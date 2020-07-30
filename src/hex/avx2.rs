@@ -66,6 +66,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         // TODO: maybe using _mm256_maskload_epi32 or _mm256_maskload_epi64
         // this will require the input memory be alinged with 4 or 8, witch can make
         // things harder
+        // TODO: use _mm256_loadu_si256 this will require casting p to be and pointer to __m256 but it
+        // doesn't need to be alinged!
         let slice = _mm256_set_epi8(
             *p.add(31), *p.add(30), *p.add(29), *p.add(28),
             *p.add(27), *p.add(26), *p.add(25), *p.add(24),
@@ -119,6 +121,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         // Takes only odd bytes
         let dec = _mm256_shuffle_epi8(dec, idec);
         
+        // TODO: how about _mm256_extracti128_si256
         // Final result, must be fliped
         *b = !_mm256_extract_epi64(dec, 1);
         *b.add(1) = !_mm256_extract_epi64(dec, 3);

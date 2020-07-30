@@ -47,6 +47,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Main loop loop
     while p.offset(15) < p_end {
+        // TODO: how about _mm_loadu_si128 or _mm_lddqu_si128
         let slice = _mm_set_epi8(
             *p.add(15), *p.add(14), *p.add(13), *p.add(12),
             *p.add(11), *p.add(10), *p.add( 9), *p.add( 8),
@@ -147,6 +148,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
     let mut b = v as *mut i64;
 
     while p.offset(15) < p_end {
+        // TODO: how about _mm_loadu_si128 or _mm_lddqu_si128
         // * NOTE: no measurable change when taking 2 u64 at the time instead of 16 u8
         // but this will required forcing the input to be 8 bytes alingned, witch is
         // very complex to do
