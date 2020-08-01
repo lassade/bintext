@@ -68,16 +68,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         // things harder
         // TODO: use _mm256_loadu_si256 this will require casting p to be and pointer to __m256 but it
         // doesn't need to be alinged!
-        let slice = _mm256_set_epi8(
-            *p.add(31), *p.add(30), *p.add(29), *p.add(28),
-            *p.add(27), *p.add(26), *p.add(25), *p.add(24),
-            *p.add(23), *p.add(22), *p.add(21), *p.add(20),
-            *p.add(19), *p.add(18), *p.add(17), *p.add(16),
-            *p.add(15), *p.add(14), *p.add(13), *p.add(12),
-            *p.add(11), *p.add(10), *p.add( 9), *p.add( 8),
-            *p.add( 7), *p.add( 6), *p.add( 5), *p.add( 4),
-            *p.add( 3), *p.add( 2), *p.add( 1), *p,
-        );
+        let slice = _mm256_loadu_si256(p as *const __m256i);
         
         // Calculates LUT range masks
         let mx6 = _mm256_cmpgt_epi8(slice, x5f);
@@ -175,16 +166,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
         // * NOTE: no measurable change when taking 2 u64 at the time instead of 16 u8
         // but this will required forcing the input to be 8 bytes alingned, witch is
         // very complex to do
-        let slice = _mm256_set_epi8(
-            *p.add(31), *p.add(30), *p.add(29), *p.add(28),
-            *p.add(27), *p.add(26), *p.add(25), *p.add(24),
-            *p.add(23), *p.add(22), *p.add(21), *p.add(20),
-            *p.add(19), *p.add(18), *p.add(17), *p.add(16),
-            *p.add(15), *p.add(14), *p.add(13), *p.add(12),
-            *p.add(11), *p.add(10), *p.add( 9), *p.add( 8),
-            *p.add( 7), *p.add( 6), *p.add( 5), *p.add( 4),
-            *p.add( 3), *p.add( 2), *p.add( 1), *p,
-        );
+        let slice = _mm256_loadu_si256(p as *const __m256i);
 
         let mnibble = {
             let temp = _mm256_and_si256(slice, umask); // avx2 only
