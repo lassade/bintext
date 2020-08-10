@@ -47,13 +47,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Main loop loop
     while p.offset(15) < p_end {
-        // TODO: how about _mm_loadu_si128 or _mm_lddqu_si128
-        let slice = _mm_set_epi8(
-            *p.add(15), *p.add(14), *p.add(13), *p.add(12),
-            *p.add(11), *p.add(10), *p.add( 9), *p.add( 8),
-            *p.add( 7), *p.add( 6), *p.add( 5), *p.add( 4),
-            *p.add( 3), *p.add( 2), *p.add( 1), *p,
-        );
+        // TODO: how about _mm_lddqu_si128?
+        let slice = _mm_loadu_si128(p as *const __m128i);
         
         // Calculates LUT range masks
         let mx6 = _mm_cmpgt_epi8(slice, x5f);
@@ -160,16 +155,11 @@ pub unsafe fn encode(input: &[u8]) -> String {
     let mut b = v as *mut i64;
 
     while p.offset(15) < p_end {
-        // TODO: how about _mm_loadu_si128 or _mm_lddqu_si128
+        // TODO: how about _mm_lddqu_si128?
         // * NOTE: no measurable change when taking 2 u64 at the time instead of 16 u8
         // but this will required forcing the input to be 8 bytes alingned, witch is
         // very complex to do
-        let slice = _mm_set_epi8(
-            *p.add(15), *p.add(14), *p.add(13), *p.add(12),
-            *p.add(11), *p.add(10), *p.add( 9), *p.add( 8),
-            *p.add( 7), *p.add( 6), *p.add( 5), *p.add( 4),
-            *p.add( 3), *p.add( 2), *p.add( 1), *p,
-        );
+        let slice = _mm_loadu_si128(p as *const __m128i);
 
         let mnibble = {
             let temp = _mm_and_si128(slice, umask);

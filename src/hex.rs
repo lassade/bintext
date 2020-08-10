@@ -80,7 +80,9 @@ pub enum DecodeError {
 #[no_mangle]
 pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3") {
+    if is_x86_feature_detected!("avx2") {
+        return unsafe { avx2::decode(input).map_err(|_| ()) };
+    } else if is_x86_feature_detected!("ssse3") {
         return unsafe { sse2::decode(input).map_err(|_| ()) };
     }
 
@@ -91,7 +93,6 @@ pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
 /// recoverable code logic or when a error message is required to facilitate
 /// user action.
 #[no_mangle]
-#[allow(unreachable_code)]
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
@@ -117,7 +118,6 @@ pub unsafe fn decode_slice(input: &mut str, offset: usize, align: usize) -> Resu
 ///////////////////////////////////////////////////////////////////////////////
 
 #[no_mangle]
-#[allow(unreachable_code)]
 pub fn encode(input: &[u8]) -> String {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
