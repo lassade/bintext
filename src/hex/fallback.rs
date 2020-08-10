@@ -33,14 +33,14 @@ pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mu
     use DecodeError::*;
 
     // Safe only when if offset is greater or equal than the alignment requirement
-    if offset < align { Err(BadOffset)? }
+    if align > 1 && offset < align { Err(BadOffset)? }
     
     let len = input.len();
     if (len - offset) & 1 != 0 { Err(OddLength)? }
     
     let s = input.as_ptr().align_offset(align);
     let mut i = offset;
-    let mut j = 0;
+    let mut j = s;
 
     while i < len {
         unsafe {

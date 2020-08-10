@@ -64,12 +64,22 @@ macro_rules! tests_hex {
                 }
             }
 
+            const SAMPLES_ALIGNED: [(&'static [u8], &'static [u8], usize, usize, usize); 5] = [
+                (b"\x02\x03\x04\x05", b"----02030405", 4, 4, 0),
+                (b"\x02\x03\x04\x05", b"#----02030405", 5, 4, 0),
+                (b"\x02\x03\x04\x05", b"#--02030405", 3, 2, 0),
+                (b"\x02\x03\x04\x05", b"02030405", 0, 1, 0),
+                (b"\x02\x03\x04\x05", b"...#----02030405", 5, 4, 3),
+            ];
+
             #[test]
             fn decoding_aligned() {
-                let mut v = b"----02030405".to_vec();
-                let v = $decode_slice(&mut v, 4, 4).unwrap();
-                assert_eq!(v, &[2, 3, 4, 5][..]);
-                assert_eq!(v.as_ptr().align_offset(4), 0);
+                for (expected, input, offset, align, start) in SAMPLES_ALIGNED.iter() {
+                    let mut v = input[*start..].to_vec();
+                    let v = $decode_slice(&mut v, *offset, *align).unwrap();
+                    assert_eq!(v, *expected);
+                    assert_eq!(v.as_ptr().align_offset(*align), 0);
+                }
             }
         }
     }
