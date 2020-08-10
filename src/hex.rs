@@ -73,6 +73,7 @@ fn alloc(length: usize) -> Vec<u8> {
 pub enum DecodeError {
     OddLength,
     InvalidCharAt(usize),
+    BadOffset,
 }
 
 /// Fast hex string decode. No error description is provided
@@ -100,6 +101,17 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     }
 
     fallback::decode(input)
+}
+
+/// Decodes a hex str starting from `offset` with a given `align`ment.
+///
+/// The input str will no longer be a valid utf8 string, a byte slice
+/// will be returned upon success matching the alignment requirements
+///
+/// **NOTE** `offset` must be greater or equal to `align`
+#[no_mangle]
+pub unsafe fn decode_slice(input: &mut str, offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    fallback::decode_slice(input.as_bytes_mut(), offset, align)
 }
 
 ///////////////////////////////////////////////////////////////////////////////

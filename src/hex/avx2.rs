@@ -150,6 +150,19 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     Ok(Vec::from_raw_parts(v, e, e))
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#[inline(always)]
+pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    let _ = input;
+    let _ = offset;
+    let _ = align;
+    todo!()
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #[inline(always)]
@@ -239,4 +252,4 @@ pub fn meet_requiriments() -> bool {
     return false;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);

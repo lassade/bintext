@@ -130,6 +130,18 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
 
 #[inline(always)]
+pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    let _ = input;
+    let _ = offset;
+    let _ = align;
+    todo!()
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#[inline(always)]
 pub unsafe fn encode(input: &[u8]) -> String {
     // Constants
     let lut = _mm_set_epi64x(HEX_ENCODE_64LUT_1, HEX_ENCODE_64LUT_0);
@@ -205,4 +217,4 @@ pub fn meet_requiriments() -> bool {
     return false;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);

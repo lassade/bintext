@@ -29,6 +29,38 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 }
 
 #[inline(always)]
+pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    use DecodeError::*;
+
+    // Safe only when if offset is greater or equal than the alignment requirement
+    if offset < align { Err(BadOffset)? }
+    
+    let len = input.len();
+    if (len - offset) & 1 != 0 { Err(OddLength)? }
+    
+    let s = input.as_ptr().align_offset(align);
+    let mut i = offset;
+    let mut j = 0;
+
+    while i < len {
+        unsafe {
+            let msn = *HEX_NIBBLE_DECODE.get_unchecked(*input.get_unchecked(i) as usize);
+            if msn > 0xf { Err(InvalidCharAt(i))? }
+
+            let lsn = *HEX_NIBBLE_DECODE.get_unchecked(*input.get_unchecked(i + 1) as usize);
+            if lsn > 0xf { Err(InvalidCharAt(i + 1))? }
+
+            *input.get_unchecked_mut(j) = (msn << 4) | lsn;
+            i += 2;
+            j += 1;
+        }
+    }
+
+    Ok(&mut input[s..(s + j)])
+}
+
+
+#[inline(always)]
 pub fn encode(input: &[u8]) -> String {
     let mut i = 0usize;
     let mut v = alloc(input.len() << 1);
@@ -49,4 +81,4 @@ pub fn meet_requiriments() -> bool {
     return true;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);

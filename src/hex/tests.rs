@@ -2,7 +2,7 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! tests_hex {
-    ($encode:path, $decode:path, $feat:path) => {
+    ($encode:path, $decode:path, $decode_slice:path, $feat:path) => {
         #[cfg(test)]
         mod tests {
             const SAMPLES: [(&'static [u8], &'static str); 6] = [
@@ -49,6 +49,10 @@ macro_rules! tests_hex {
             #[test]
             #[allow(unused_unsafe)]
             fn decoding() {
+                if !$feat() {
+                    panic!("doesn't have the required instruction set");
+                }
+                
                 for (expected, input) in SAMPLES.iter() {
                     let r = unsafe { $decode(input) };
                     assert_eq!(r.unwrap(), *expected);
@@ -58,6 +62,14 @@ macro_rules! tests_hex {
                     let r = unsafe { $decode(&str::to_uppercase(input)) };
                     assert_eq!(r.unwrap(), *expected);
                 }
+            }
+
+            #[test]
+            fn decoding_aligned() {
+                let mut v = b"----02030405".to_vec();
+                let v = $decode_slice(&mut v, 4, 4).unwrap();
+                assert_eq!(v, &[2, 3, 4, 5][..]);
+                assert_eq!(v.as_ptr().align_offset(4), 0);
             }
         }
     }
