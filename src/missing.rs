@@ -1,7 +1,11 @@
 //! Rust doesn't have a `_mm_storeu_si64` where is provide 2 alternatives
-//! on `nightly` uses the `asm!` to output the proper assembly instruction
-//! on stable a best effort function is provided, it should yield
-//! 2 instructions.
+//! on nightly + feature `asm` uses the `asm!` macro to output the right
+//! assembly instruction, on stable a best effort function is provided,
+//! it should yield 2 instructions.
+//!
+//! The throughput using `asm` is about 45% greater than not using it,
+//! thus it will be enabled by default.
+//!
 
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
@@ -9,13 +13,13 @@ use std::arch::x86::*;
 use std::arch::x86_64::*;
 
 #[inline]
-#[cfg(feature = "nightly")]
+#[cfg(feature = "asm")]
 pub unsafe fn _mm_storeu_si64(mem_addr: *mut i8, a: __m128i) {
     asm!("movq [{}], {}", in(reg) mem_addr, in(xmm_reg) a);
 }
 
 #[inline]
-#[cfg(not(feature = "nightly"))]
+#[cfg(not(feature = "asm"))]
 pub unsafe fn _mm_storeu_si64(mem_addr: *mut i8, a: __m128i) {
     let v: [i8; 16] =  std::mem::transmute(a);
     *mem_addr.add(0) = *v.get_unchecked(0);

@@ -24,7 +24,8 @@ base64 = "0.12.3"
 radix64 = "0.6.2"
 
 [features]
-nightly = []
+default = ["asm"] # enabled by default because peformance is mutch better
+asm = []
 
 [[bench]]
 name = "bench"

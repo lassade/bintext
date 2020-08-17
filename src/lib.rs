@@ -7,12 +7,11 @@
 //!
 //! ### Differentials from similar crates
 //!
-//! - SSE for both `encode` and `decode` (for better performace and
-//! assecibility)
-//! - As good as it get's default impl
-//! 
+//! - SSE for both `encode` and `decode` (for better performance and accessibility)
+//! - As good as it gets default impl
+//! - Decode aligned, decodes and aligns memory when enough padding is given
 
-#![cfg_attr(feature = "nightly", feature(asm))]
+#![cfg_attr(feature = "asm", feature(asm))]
 
 pub mod hex;
 mod missing;

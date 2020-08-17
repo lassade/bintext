@@ -131,13 +131,12 @@ pub unsafe fn decode_aligned(input: &mut str, offset: usize, align: usize) -> Re
             
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
-        avx2::decode_noalloc(input, output)?;
+        return avx2::decode_noalloc(input, output).map(|_| output);
     } else if is_x86_feature_detected!("ssse3")  {
-        sse2::decode_noalloc(input, output)?;
-    } else {
-        fallback::decode_noalloc(input, output)?;
+        return sse2::decode_noalloc(input, output).map(|_| output);
     }
 
+    fallback::decode_noalloc(input, output)?;
     Ok(output)
 }
 
