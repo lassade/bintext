@@ -20,6 +20,32 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     // Input check
     let c = input.len();
     if c & 1 != 0 { Err(OddLength)? }
+    
+    let mut v = super::alloc(c >> 1);
+    decode_noalloc(input.as_bytes(), v.as_mut_slice())?;
+
+    Ok(v)
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#[inline(always)]
+pub unsafe fn decode_aligned(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    let _ = input;
+    let _ = offset;
+    let _ = align;
+    todo!()
+}
+
+pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), DecodeError> {
+    use std::io::Write;
+    use DecodeError::*;
+
+    // Input check
+    let c = input.len();
+    //if c & 1 != 0 { Err(OddLength)? }
 
     // Constants
     let lutx3 = _mm_set_epi64x(HEX_DECODE_64LUT_X30_1, HEX_DECODE_64LUT_X30_0);
@@ -35,15 +61,13 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     let m = _mm_set1_epi16(0x00FFu16 as i16);
     let idec = _mm_set_epi64x(0x0f_0d_0b_09_07_05_03_01u64 as i64, -1);
     let tmpsll = _mm_set1_epi64x(12);
+    let filled = _mm_set1_epi64x(-1);
     
     // Input pointers
     let mut p = input.as_ptr() as *const i8;
     let p_end = p.add(c);
     
-    // Allocate chunks of 8 bytes with alignment of 8
-    let e = c >> 1;
-    let v = alloc(Layout::from_size_align(e, align_of::<i64>()).unwrap());
-    let mut b = v as *mut i64;
+    let mut value: [u8; 16] = std::mem::MaybeUninit::uninit().assume_init();
 
     // Main loop loop
     while p.offset(15) < p_end {
@@ -93,17 +117,18 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         };
         
         // Takes only odd bytes
-        let dec = _mm_shuffle_epi8(dec, idec);
-        
         // Final result, must be fliped
-        *b = !_mm_extract_epi64(dec, 1);
+        let dec = _mm_andnot_si128(_mm_shuffle_epi8(dec, idec), filled);
+
+        // Saves the final result
+        // ! FIXME: should be using `_mm_storeu_si64` but rust doesn't provide this intrinsic
+        _mm_storeu_si128(value.as_mut_ptr() as *mut __m128i, dec);
+        output.write(&value[8..16]).unwrap();
 
         p = p.add(16);
-        b = b.add(1);
     }
 
     // Handle the remaining of bytes
-    let mut b = b as *mut u8;
     while p < p_end {
         let msn = *HEX_NIBBLE_DECODE.get_unchecked(*p as usize);
         if msn > 0xf { Err(InvalidCharAt(0))? }
@@ -113,25 +138,12 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         if lsn > 0xf { Err(InvalidCharAt(0))? }
         p = p.add(1);
 
-        *b = (msn << 4) | lsn;
-        b = b.add(1);
+        output[0] = (msn << 4) | lsn;
+        output = &mut output[1..];
     }
 
-    Ok(Vec::from_raw_parts(v, e, e))
+    Ok(())
 }
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-
-#[inline(always)]
-pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
-    let _ = input;
-    let _ = offset;
-    let _ = align;
-    todo!()
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -157,7 +169,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
     while p.offset(15) < p_end {
         // TODO: how about _mm_lddqu_si128?
         // * NOTE: no measurable change when taking 2 u64 at the time instead of 16 u8
-        // but this will required forcing the input to be 8 bytes alingned, witch is
+        // but this will required forcing the input to be 8 bytes aligned, witch is
         // very complex to do
         let slice = _mm_loadu_si128(p as *const __m128i);
 
@@ -174,6 +186,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
         let hex0 = _mm_unpacklo_epi8(mhex, lhex);
         let hex1 = _mm_unpackhi_epi8(mhex, lhex);
         
+        // ! FIXME SSE4
         *b = _mm_extract_epi64(hex0, 0);
         *b.add(1) = _mm_extract_epi64(hex0, 1);
         *b.add(2) = _mm_extract_epi64(hex1, 0);
@@ -199,7 +212,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
 }
 
 #[inline(always)]
-pub fn meet_requiriments() -> bool {
+pub fn meet_requirements() -> bool {
     if is_x86_feature_detected!("sse2") && is_x86_feature_detected!("ssse3")  {
         return true;
     }
@@ -207,4 +220,4 @@ pub fn meet_requiriments() -> bool {
     return false;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::meet_requirements);

@@ -2,7 +2,7 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! tests_hex {
-    ($encode:path, $decode:path, $decode_slice:path, $feat:path) => {
+    ($encode:path, $decode:path, $feat:path) => {
         #[cfg(test)]
         mod tests {
             const SAMPLES: [(&'static [u8], &'static str); 6] = [
@@ -61,24 +61,6 @@ macro_rules! tests_hex {
                 for (expected, input) in SAMPLES.iter() {
                     let r = unsafe { $decode(&str::to_uppercase(input)) };
                     assert_eq!(r.unwrap(), *expected);
-                }
-            }
-
-            const SAMPLES_ALIGNED: [(&'static [u8], &'static [u8], usize, usize, usize); 5] = [
-                (b"\x02\x03\x04\x05", b"----02030405", 4, 4, 0),
-                (b"\x02\x03\x04\x05", b"#----02030405", 5, 4, 0),
-                (b"\x02\x03\x04\x05", b"#--02030405", 3, 2, 0),
-                (b"\x02\x03\x04\x05", b"02030405", 0, 1, 0),
-                (b"\x02\x03\x04\x05", b"...#----02030405", 5, 4, 3),
-            ];
-
-            #[test]
-            fn decoding_aligned() {
-                for (expected, input, offset, align, start) in SAMPLES_ALIGNED.iter() {
-                    let mut v = input[*start..].to_vec();
-                    let v = $decode_slice(&mut v, *offset, *align).unwrap();
-                    assert_eq!(v, *expected);
-                    assert_eq!(v.as_ptr().align_offset(*align), 0);
                 }
             }
         }

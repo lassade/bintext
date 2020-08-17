@@ -12,4 +12,7 @@
 //! - As good as it get's default impl
 //! 
 
+#![cfg_attr(feature = "nightly", feature(asm))]
+
 pub mod hex;
+pub mod missing;

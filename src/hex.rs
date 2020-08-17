@@ -1,6 +1,6 @@
 //! Hex encoding and decoding
 
-mod sse2;
+pub mod sse2;
 mod avx2;
 mod fallback;
 
@@ -111,8 +111,34 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 ///
 /// **NOTE** `offset` must be greater or equal to `align`
 #[no_mangle]
-pub unsafe fn decode_slice(input: &mut str, offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
-    fallback::decode_slice(input.as_bytes_mut(), offset, align)
+pub unsafe fn decode_aligned(input: &mut str, offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+    use DecodeError::*;
+
+    // Safe only when if offset is greater or equal than the alignment requirement
+    if align > 1 && offset < align { Err(BadOffset)? }
+    
+    let bytes = input.as_bytes_mut();
+    let len = bytes.len();
+    if (len - offset) & 1 != 0 { Err(OddLength)? }
+    
+    let a = bytes.as_ptr().align_offset(align);
+    let output =
+        std::slice::from_raw_parts_mut(
+            bytes.as_mut_ptr().add(a),
+            (len - offset) / 2);
+
+    let input = &bytes[offset..];
+            
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    if is_x86_feature_detected!("avx2") {
+        avx2::decode_noalloc(input, output)?;
+    } else if is_x86_feature_detected!("ssse3")  {
+        sse2::decode_noalloc(input, output)?;
+    } else {
+        fallback::decode_noalloc(input, output)?;
+    }
+
+    Ok(output)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -127,4 +153,27 @@ pub fn encode(input: &[u8]) -> String {
     }
 
     fallback::encode(input)
+}
+
+
+#[cfg(test)]
+mod tests_extra {
+    const SAMPLES_ALIGNED: [(&'static [u8], &'static str, usize, usize, usize); 5] = [
+        (b"\x02\x03\x04\x05", "----02030405", 4, 4, 0),
+        (b"\x02\x03\x04\x05", "#----02030405", 5, 4, 0),
+        (b"\x02\x03\x04\x05", "#--02030405", 3, 2, 0),
+        (b"\x02\x03\x04\x05", "02030405", 0, 1, 0),
+        (b"\x02\x03\x04\x05", "...#----02030405", 5, 4, 3),
+    ];
+
+    #[test]
+    fn decoding_aligned() {
+
+        for (expected, input, offset, align, start) in SAMPLES_ALIGNED.iter() {
+            let mut v = input[*start..].to_string();
+            let v = unsafe { super::decode_aligned(&mut v, *offset, *align).unwrap() };
+            assert_eq!(v, *expected);
+            assert_eq!(v.as_ptr().align_offset(*align), 0);
+        }
+    }
 }

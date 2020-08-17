@@ -146,10 +146,9 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
 
 #[inline(always)]
-pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
     let _ = input;
-    let _ = offset;
-    let _ = align;
+    let _ = output;
     todo!()
 }
 
@@ -226,7 +225,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
 }
 
 #[inline(always)]
-pub fn meet_requiriments() -> bool {
+pub fn meet_requirements() -> bool {
     if is_x86_feature_detected!("avx2") {
         return true;
     }
@@ -234,4 +233,4 @@ pub fn meet_requiriments() -> bool {
     return false;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::meet_requirements);

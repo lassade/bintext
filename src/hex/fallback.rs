@@ -6,41 +6,23 @@ use super::{alloc, DecodeError, HEX_ENCODE, HEX_NIBBLE_DECODE};
 pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     use DecodeError::*;
 
-    let p = input.as_bytes();
     let l = input.len();
     if l & 1 != 0 { Err(OddLength)? }
 
-    let mut i = 0;
     let mut v = alloc(l >> 1);
-    for b in v.iter_mut() {
-        unsafe {
-            let msn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i) as usize);
-            if msn > 0xf { Err(InvalidCharAt(i))? }
-
-            let lsn = *HEX_NIBBLE_DECODE.get_unchecked(*p.get_unchecked(i | 1) as usize);
-            if lsn > 0xf { Err(InvalidCharAt(i | 1))? }
-
-            *b = (msn << 4) | lsn;
-            i += 2;
-        }
-    }
+    decode_noalloc(input.as_bytes(), &mut v[..])?;
 
     Ok(v)
 }
 
-#[inline(always)]
-pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
     use DecodeError::*;
-
-    // Safe only when if offset is greater or equal than the alignment requirement
-    if align > 1 && offset < align { Err(BadOffset)? }
     
     let len = input.len();
-    if (len - offset) & 1 != 0 { Err(OddLength)? }
+    // if len & 1 != 0 { Err(OddLength)? }
     
-    let s = input.as_ptr().align_offset(align);
-    let mut i = offset;
-    let mut j = s;
+    let mut i = 0;
+    let mut j = 0;
 
     while i < len {
         unsafe {
@@ -50,13 +32,13 @@ pub fn decode_slice(input: &mut [u8], offset: usize, align: usize) -> Result<&mu
             let lsn = *HEX_NIBBLE_DECODE.get_unchecked(*input.get_unchecked(i + 1) as usize);
             if lsn > 0xf { Err(InvalidCharAt(i + 1))? }
 
-            *input.get_unchecked_mut(j) = (msn << 4) | lsn;
+            *output.get_unchecked_mut(j) = (msn << 4) | lsn;
             i += 2;
             j += 1;
         }
     }
 
-    Ok(&mut input[s..(s + j)])
+    Ok(())
 }
 
 
@@ -77,8 +59,8 @@ pub fn encode(input: &[u8]) -> String {
 
 #[inline(always)]
 #[allow(dead_code)]
-pub fn meet_requiriments() -> bool {
+pub fn meet_requirements() -> bool {
     return true;
 }
 
-crate::tests_hex!(super::encode, super::decode, super::decode_slice, super::meet_requiriments);
+crate::tests_hex!(super::encode, super::decode, super::meet_requirements);
