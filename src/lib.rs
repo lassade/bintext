@@ -15,4 +15,4 @@
 #![cfg_attr(feature = "nightly", feature(asm))]
 
 pub mod hex;
-pub mod missing;
+mod missing;

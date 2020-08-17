@@ -9,7 +9,6 @@ use std::alloc::{alloc, Layout};
 use std::mem::align_of;
 use super::*;
 
-
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -39,8 +38,7 @@ pub unsafe fn decode_aligned(input: &mut [u8], offset: usize, align: usize) -> R
     todo!()
 }
 
-pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), DecodeError> {
-    use std::io::Write;
+pub unsafe fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
     use DecodeError::*;
 
     // Input check
@@ -59,7 +57,7 @@ pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), 
     let x60 = _mm_set1_epi8(0x60u8 as i8);
     
     let m = _mm_set1_epi16(0x00FFu16 as i16);
-    let idec = _mm_set_epi64x(0x0f_0d_0b_09_07_05_03_01u64 as i64, -1);
+    let idec = _mm_set_epi64x(-1, 0x0f_0d_0b_09_07_05_03_01u64 as i64);
     let tmpsll = _mm_set1_epi64x(12);
     let filled = _mm_set1_epi64x(-1);
     
@@ -67,7 +65,7 @@ pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), 
     let mut p = input.as_ptr() as *const i8;
     let p_end = p.add(c);
     
-    let mut value: [u8; 16] = std::mem::MaybeUninit::uninit().assume_init();
+    let mut b = output.as_mut_ptr() as *mut i8;
 
     // Main loop loop
     while p.offset(15) < p_end {
@@ -121,9 +119,8 @@ pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), 
         let dec = _mm_andnot_si128(_mm_shuffle_epi8(dec, idec), filled);
 
         // Saves the final result
-        // ! FIXME: should be using `_mm_storeu_si64` but rust doesn't provide this intrinsic
-        _mm_storeu_si128(value.as_mut_ptr() as *mut __m128i, dec);
-        output.write(&value[8..16]).unwrap();
+        crate::missing::_mm_storeu_si64(b, dec);
+        b = b.add(8);
 
         p = p.add(16);
     }
@@ -138,8 +135,8 @@ pub unsafe fn decode_noalloc(input: &[u8], mut output: &mut [u8]) -> Result<(), 
         if lsn > 0xf { Err(InvalidCharAt(0))? }
         p = p.add(1);
 
-        output[0] = (msn << 4) | lsn;
-        output = &mut output[1..];
+        *b = ((msn << 4) | lsn) as i8;
+        b = b.add(1);
     }
 
     Ok(())

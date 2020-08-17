@@ -30,11 +30,11 @@ macro_rules! _mm256_dbg {
     }
 }
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! _mm128_dbg {
-    ($v:ident) => {
-        print!("{:8}: {:016x}", stringify!($v), _mm_extract_epi64($v, 1));
-        println!("{:016x}", _mm_extract_epi64($v, 0));
-    }
-}
+// #[doc(hidden)]
+// #[macro_export]
+// macro_rules! _mm128_dbg {
+//     ($v:ident) => {
+//         print!("{:8}: {:016x}", stringify!($v), _mm_extract_epi64($v, 1));
+//         println!("{:016x}", _mm_extract_epi64($v, 0));
+//     }
+// }
