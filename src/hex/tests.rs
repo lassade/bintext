@@ -1,4 +1,3 @@
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! tests_hex {
@@ -32,7 +31,7 @@ macro_rules! tests_hex {
                        dd396f64ee14") // 70
                 ];
 
-                
+
             #[test]
             #[allow(unused_unsafe)]
             fn encoding() {
@@ -52,7 +51,7 @@ macro_rules! tests_hex {
                 if !$feat() {
                     panic!("doesn't have the required instruction set");
                 }
-                
+
                 for (expected, input) in SAMPLES.iter() {
                     let r = unsafe { $decode(input) };
                     assert_eq!(r.unwrap(), *expected);

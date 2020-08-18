@@ -11,7 +11,4 @@
 //! - As good as it gets default impl
 //! - Decode aligned, decodes and aligns memory when enough padding is given
 
-#![cfg_attr(feature = "asm", feature(asm))]
-
 pub mod hex;
-mod missing;

@@ -1,4 +1,3 @@
-
 /// Considers SSE2 and SSSE3 feature set to be present in very computer
 /// this library will ever run, consider not using it.
 ///
@@ -7,7 +6,9 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! is_sse_ubiquitous {
-    () => { true };
+    () => {
+        true
+    };
 }
 
 /// Considers SSE2 and SSSE3 feature set to be present in very computer
@@ -16,7 +17,9 @@ macro_rules! is_sse_ubiquitous {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! is_sse_ubiquitous {
-    () => { false };
+    () => {
+        false
+    };
 }
 
 #[doc(hidden)]
@@ -27,7 +30,7 @@ macro_rules! _mm256_dbg {
         print!("{:016x}", _mm256_extract_epi64($v, 2));
         print!("{:016x}", _mm256_extract_epi64($v, 1));
         println!("{:016x}", _mm256_extract_epi64($v, 0));
-    }
+    };
 }
 
 // #[doc(hidden)]

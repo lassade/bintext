@@ -1,16 +1,17 @@
 //! Hex encoding and decoding
 
-pub mod sse2;
 mod avx2;
 mod fallback;
+pub mod sse2;
 
-mod tests;
 mod support;
+mod tests;
 
 /// Invalid nibble
 const I: u8 = 255;
 
 /// Hex nibble decoding table
+#[rustfmt::skip]
 const HEX_NIBBLE_DECODE: [u8; 256] = [
     I,   I,   I,   I,   I,   I,   I,   I,   I,   I,  I,  I,  I,  I,  I,  I,
     I,   I,   I,   I,   I,   I,   I,   I,   I,   I,  I,  I,  I,  I,  I,  I,
@@ -32,10 +33,12 @@ const HEX_NIBBLE_DECODE: [u8; 256] = [
 
 // Inverted to make error handle works
 const N: u8 = 0;
-const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9,   N,   N,   N,   N,   N,   N]); // [0-9]
-const HEX_DECODE_64LUT_X30_0: i64 = i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
-const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([  N, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf,   N]); // [a-z] [A-Z]
+const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9, N, N, N, N, N, N]); // [0-9]
+const HEX_DECODE_64LUT_X30_0: i64 =
+    i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
+const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([N, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf, N]); // [a-z] [A-Z]
 
+#[rustfmt::skip]
 const HEX_ENCODE: [u8; 512] = 
     *b"000102030405060708090a0b0c0d0e0f\
        101112131415161718191a1b1c1d1e1f\
@@ -54,18 +57,19 @@ const HEX_ENCODE: [u8; 512] =
        e0e1e2e3e4e5e6e7e8e9eaebecedeeef\
        f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
 
-
 // (L) least (M) more significant mibble masks
 const MN_MASK: i32 = 0xF0F0F0F0u32 as i32;
 const LN_MASK: i32 = 0x0F0F0F0F;
 const HEX_ENCODE_64LUT_1: i64 = i64::from_be_bytes(*b"fedcba98");
 const HEX_ENCODE_64LUT_0: i64 = i64::from_be_bytes(*b"76543210");
 
-/// Allocates `Vec<u8>` of a given length with uninialized data
+/// Allocates `Vec<u8>` of a given length with uninitialized data
 #[inline(always)]
 fn alloc(length: usize) -> Vec<u8> {
     let mut v = Vec::with_capacity(length);
-    unsafe { v.set_len(length); }
+    unsafe {
+        v.set_len(length);
+    }
     v
 }
 
@@ -97,7 +101,7 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
         return unsafe { avx2::decode(input) };
-    } else if is_x86_feature_detected!("ssse3")  {
+    } else if is_x86_feature_detected!("ssse3") {
         return unsafe { sse2::decode(input) };
     }
 
@@ -111,28 +115,33 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 ///
 /// **NOTE** `offset` must be greater or equal to `align`
 #[no_mangle]
-pub unsafe fn decode_aligned(input: &mut str, offset: usize, align: usize) -> Result<&mut [u8], DecodeError> {
+pub unsafe fn decode_aligned(
+    input: &mut str,
+    offset: usize,
+    align: usize,
+) -> Result<&mut [u8], DecodeError> {
     use DecodeError::*;
 
     // Safe only when if offset is greater or equal than the alignment requirement
-    if align > 1 && offset < align { Err(BadOffset)? }
-    
+    if align > 1 && offset < align {
+        Err(BadOffset)?
+    }
+
     let bytes = input.as_bytes_mut();
     let len = bytes.len();
-    if (len - offset) & 1 != 0 { Err(OddLength)? }
-    
+    if (len - offset) & 1 != 0 {
+        Err(OddLength)?
+    }
+
     let a = bytes.as_ptr().align_offset(align);
-    let output =
-        std::slice::from_raw_parts_mut(
-            bytes.as_mut_ptr().add(a),
-            (len - offset) / 2);
+    let output = std::slice::from_raw_parts_mut(bytes.as_mut_ptr().add(a), (len - offset) / 2);
 
     let input = &bytes[offset..];
-            
+
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
         return avx2::decode_noalloc(input, output).map(|_| output);
-    } else if is_x86_feature_detected!("ssse3")  {
+    } else if is_x86_feature_detected!("ssse3") {
         return sse2::decode_noalloc(input, output).map(|_| output);
     }
 
@@ -147,13 +156,12 @@ pub fn encode(input: &[u8]) -> String {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
         return unsafe { avx2::encode(input) };
-    } else if is_x86_feature_detected!("ssse3")  {
+    } else if is_x86_feature_detected!("ssse3") {
         return unsafe { sse2::encode(input) };
     }
 
     fallback::encode(input)
 }
-
 
 #[cfg(test)]
 mod tests_extra {
@@ -167,7 +175,6 @@ mod tests_extra {
 
     #[test]
     fn decoding_aligned() {
-
         for (expected, input, offset, align, start) in SAMPLES_ALIGNED.iter() {
             let mut v = input[*start..].to_string();
             let v = unsafe { super::decode_aligned(&mut v, *offset, *align).unwrap() };
