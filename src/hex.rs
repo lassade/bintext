@@ -149,6 +149,24 @@ pub unsafe fn decode_aligned(
     Ok(output)
 }
 
+pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
+    use DecodeError::*;
+
+    let c = input.len();
+    if c & 1 != 0 {
+        Err(OddLength)?
+    }
+
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    if is_x86_feature_detected!("avx2") {
+        return unsafe { avx2::decode_noalloc(input, output) };
+    } else if is_x86_feature_detected!("ssse3") {
+        return unsafe { sse2::decode_noalloc(input, output) };
+    }
+
+    fallback::decode_noalloc(input, output)
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #[no_mangle]

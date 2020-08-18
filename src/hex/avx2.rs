@@ -14,13 +14,6 @@ use std::ptr::copy_nonoverlapping;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Inverted to make error handle works
-const I: u8 = 0;
-const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9, I, I, I, I, I, I]); // [0-9]
-const HEX_DECODE_64LUT_X30_0: i64 =
-    i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
-const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([I, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf, I]); // [a-z] [A-Z]
-
 #[inline(always)]
 pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     use DecodeError::*;
@@ -30,6 +23,24 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     if c & 1 != 0 {
         Err(OddLength)?
     }
+
+    let mut v = alloc(c >> 1);
+    decode_noalloc(input.as_bytes(), &mut v[..])?;
+
+    Ok(v)
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Inverted to make error handle works
+const I: u8 = 0;
+const HEX_DECODE_64LUT_X30_1: i64 = i64::from_le_bytes([!0x8, !0x9, I, I, I, I, I, I]); // [0-9]
+const HEX_DECODE_64LUT_X30_0: i64 =
+    i64::from_le_bytes([!0x0, !0x1, !0x2, !0x3, !0x4, !0x5, !0x6, !0x7]);
+const HEX_DECODE_64LUT_AZ: i64 = i64::from_le_bytes([I, !0xa, !0xb, !0xc, !0xd, !0xe, !0xf, I]); // [a-z] [A-Z]
+
+pub unsafe fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
+    use DecodeError::*;
 
     // Constants
     let lutx3 = _mm256_set_epi64x(
@@ -60,19 +71,13 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
     // Input pointers
     let mut p = input.as_ptr() as *const i8;
-    let p_end = p.add(c);
+    let p_end = p.add(input.len());
 
     // Allocate chunks of 8 bytes with alignment of 8
-    let mut v = alloc(c >> 1);
-    let mut b = v.as_mut_ptr();
+    let mut b = output.as_mut_ptr();
 
     // Main loop loop
     while p.offset(31) < p_end {
-        // TODO: maybe using _mm256_maskload_epi32 or _mm256_maskload_epi64
-        // this will require the input memory be alinged with 4 or 8, witch can make
-        // things harder
-        // TODO: use _mm256_loadu_si256 this will require casting p to be and pointer to __m256 but it
-        // doesn't need to be alinged!
         let slice = _mm256_loadu_si256(p as *const __m256i);
 
         // Calculates LUT range masks
@@ -151,16 +156,7 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
         b = b.add(1);
     }
 
-    Ok(v)
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-#[inline(always)]
-pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
-    let _ = input;
-    let _ = output;
-    todo!()
+    Ok(())
 }
 
 ///////////////////////////////////////////////////////////////////////////////

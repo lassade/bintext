@@ -28,24 +28,8 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#[inline(always)]
-pub unsafe fn decode_aligned(
-    input: &mut [u8],
-    offset: usize,
-    align: usize,
-) -> Result<&mut [u8], DecodeError> {
-    let _ = input;
-    let _ = offset;
-    let _ = align;
-    todo!()
-}
-
 pub unsafe fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
     use DecodeError::*;
-
-    // Input check
-    let c = input.len();
-    //if c & 1 != 0 { Err(OddLength)? }
 
     // Constants
     let lutx3 = _mm_set_epi64x(HEX_DECODE_64LUT_X30_1, HEX_DECODE_64LUT_X30_0);
@@ -65,7 +49,7 @@ pub unsafe fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), Deco
 
     // Input pointers
     let mut p = input.as_ptr() as *const i8;
-    let p_end = p.add(c);
+    let p_end = p.add(input.len());
 
     let mut b = output.as_mut_ptr();
 

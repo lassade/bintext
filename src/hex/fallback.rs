@@ -21,7 +21,6 @@ pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError
     use DecodeError::*;
 
     let len = input.len();
-    // if len & 1 != 0 { Err(OddLength)? }
 
     let mut i = 0;
     let mut j = 0;
