@@ -1,4 +1,4 @@
-//! 
+//!
 //! Encoder and decoder of binary data for hex or base64 (wip).
 //!
 //! Provides SIMD implementations using SSE (SSE2 + SSSE3) and AVX2
