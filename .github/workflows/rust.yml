@@ -11,25 +11,25 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install latest stable
-      uses: actions-rs/toolchain@v1
-      with:
+      - uses: actions-rs/toolchain@v1
+        with:
           toolchain: stable
           override: true
-          components: rustfmt, clippy
 
-    - name: Run checks
-      uses: actions-rs/cargo@v1
-      with:
-        command: check --verbose
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt
 
-    - name: Run tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test --verbose
+      - name: Build
+        run: cargo check
+
+      - name: Check the format
+        run: cargo +nightly fmt --all -- --check
+
+      - name: Run tests
+        run: cargo test --workspace
