@@ -123,8 +123,9 @@ pub unsafe fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 
         // Final result, must be fliped
         let dec = _mm256_andnot_si256(dec, filled);
-        copy_nonoverlapping((&dec as *const _ as *const u8).add(8), b, 8);
-        copy_nonoverlapping((&dec as *const _ as *const u8).add(16), b.add(8), 8);
+        let ptr = &dec as *const _ as *const u8;
+        copy_nonoverlapping(ptr.add(8), b, 8);
+        copy_nonoverlapping(ptr.add(24), b.add(8), 8);
 
         p = p.add(32);
         b = b.add(16);
@@ -205,12 +206,14 @@ pub unsafe fn encode(input: &[u8]) -> String {
         let hex0 = _mm256_unpacklo_epi8(mhex, lhex);
         let hex1 = _mm256_unpackhi_epi8(mhex, lhex);
 
-        // FIXME
-        copy_nonoverlapping(&hex0 as *const _ as *const u8, b, 16);
-        copy_nonoverlapping(&hex1 as *const _ as *const u8, b.add(16), 16);
+        let ptr0 = &hex0 as *const _ as *const u8;
+        let ptr1 = &hex1 as *const _ as *const u8;
 
-        copy_nonoverlapping((&hex0 as *const _ as *const u8).add(16), b.add(32), 16);
-        copy_nonoverlapping((&hex1 as *const _ as *const u8).add(16), b.add(48), 16);
+        copy_nonoverlapping(ptr0, b, 16);
+        copy_nonoverlapping(ptr1, b.add(16), 16);
+
+        copy_nonoverlapping(ptr0.add(16), b.add(32), 16);
+        copy_nonoverlapping(ptr1.add(16), b.add(48), 16);
 
         p = p.add(32);
         b = b.add(64);
