@@ -149,13 +149,17 @@ pub unsafe fn decode_aligned(
     Ok(output)
 }
 
-pub fn decode_noalloc(input: &[u8], output: &mut [u8]) -> Result<(), DecodeError> {
+/// Decodes an hex string without allocating any memory
+#[no_mangle]
+pub fn decode_noalloc(input: &str, output: &mut [u8]) -> Result<(), DecodeError> {
     use DecodeError::*;
 
     let c = input.len();
     if c & 1 != 0 {
         Err(OddLength)?
     }
+
+    let input = input.as_bytes();
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
