@@ -1,6 +1,8 @@
 Bin Text (WIP)
 =========
 
+![https://github.com/lassade/bintext/blob/main/.github/workflows/rust.yml](https://github.com/lassade/bintext/workflows/Rust/badge.svg)
+
 Hex and base64 (wip) encoding and decoding with support for SIMD (AVX2 and
 SSSE3) with good fallback peformance
 
