@@ -134,6 +134,18 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 /// will be returned upon success matching the alignment requirements
 ///
 /// **NOTE** `offset` must be greater or equal to `align`
+///
+/// ```rust
+/// // Padding of 8 (suppose it was read form a file)
+/// let mut hex = "--------a1f7d5e8d14f0f76".to_string();
+///
+/// unsafe {
+///     // Decode with padding of 8 and alignment of 8
+///     let slice = bintext::hex::decode_aligned(&mut hex, 8, 8).unwrap();
+///     // Data is aligned so you can safely do this:
+///     let slice: &[u64] = std::mem::transmute(slice);
+/// }
+/// ```
 #[no_mangle]
 pub unsafe fn decode_aligned(
     input: &mut str,
