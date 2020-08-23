@@ -167,6 +167,7 @@ pub unsafe fn encode(input: &[u8]) -> String {
         let hex0 = _mm_unpacklo_epi8(mhex, lhex);
         let hex1 = _mm_unpackhi_epi8(mhex, lhex);
 
+        // ! FIXME: use copy_nonoverlapping
         _mm_storeu_si128(b as *mut _, hex0);
         _mm_storeu_si128(b.add(16) as *mut _, hex1);
 

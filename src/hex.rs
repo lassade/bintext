@@ -143,7 +143,10 @@ pub fn decode(input: &str) -> Result<Vec<u8>, DecodeError> {
 ///     // Decode with padding of 8 and alignment of 8
 ///     let slice = bintext::hex::decode_aligned(&mut hex, 8, 8).unwrap();
 ///     // Data is aligned so you can safely do this:
-///     let slice: &[u64] = std::slice::from_raw_parts(slice.as_mut_ptr() as *mut _, 2);
+///     let slice: &[u64] = std::slice::from_raw_parts(
+///        slice.as_ptr() as *const _,
+///        slice.len() / std::mem::size_of::<u64>()
+///     );
 /// }
 /// ```
 #[no_mangle]

@@ -29,7 +29,10 @@ unsafe {
     // Decode with padding of 8 and alignment of 8
     let slice = bintext::hex::decode_aligned(&mut hex, 8, 8).unwrap();
     // Data is aligned so you can safely do this:
-    let slice: &[u64] = std::mem::transmute(slice);
+    let slice: &[u64] = std::slice::from_raw_parts(
+        slice.as_ptr() as *const _,
+        slice.len() / std::mem::size_of::<u64>()
+    );
 }
 ```
 
