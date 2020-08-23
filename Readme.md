@@ -18,6 +18,9 @@ to be re-aligned while decoding, if the required alignment is `N` maximum amount
 of offset need to move the bytes is less than `N` thus by providing an start padding
 in the binary encoded text of `N - 1` it's possible to align the data up to `N`.
 
+**Quick note** this crate will only accept padding equal or grater than `N`, because
+it's a bit cheap to do this way.
+
 ```rust
 // Padding of 8 (suppose it was read form a file)
 let hex = "--------a1f7d5e8d14f0f76".to_string();

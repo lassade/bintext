@@ -126,11 +126,11 @@ fn cmp(c: &mut Criterion) {
             let hex = hex::encode(&data.0);
             assert_eq!(
                 hex::decode(&hex).unwrap(),
-                bintext::hex::decode_no(&hex).unwrap()
+                bintext::hex::decode_noerr(&hex).unwrap()
             );
             b.iter_batched(
                 || &hex,
-                |value| black_box(bintext::hex::decode_no(value).unwrap()),
+                |value| black_box(bintext::hex::decode_noerr(value).unwrap()),
                 BatchSize::NumIterations(LEN as u64),
             )
         })

@@ -1,8 +1,11 @@
 //! Hex encoding and decoding
 
+use std::error::Error;
+use std::fmt;
+
 mod avx2;
 mod fallback;
-pub mod sse2;
+mod sse2;
 
 mod support;
 mod tests;
@@ -77,12 +80,29 @@ fn alloc(length: usize) -> Vec<u8> {
 pub enum DecodeError {
     OddLength,
     InvalidCharAt(usize),
+    /// Offset was less than alignment (it needs to be at least equal or greater)
     BadOffset,
 }
 
+impl fmt::Display for DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use DecodeError::*;
+        match self {
+            OddLength => write!(f, "odd length, hexadecimal strings should be always even"),
+            InvalidCharAt(pos) => write!(f, "invalid hexadecimal char at {}", pos),
+            BadOffset => write!(
+                f,
+                "not enough offset was given, it needs to be equal or greater than alignment"
+            ),
+        }
+    }
+}
+
+impl Error for DecodeError {}
+
 /// Fast hex string decode. No error description is provided
 #[no_mangle]
-pub fn decode_no(input: &str) -> Result<Vec<u8>, ()> {
+pub fn decode_noerr(input: &str) -> Result<Vec<u8>, ()> {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     if is_x86_feature_detected!("avx2") {
         return unsafe { avx2::decode(input).map_err(|_| ()) };
