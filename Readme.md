@@ -1,7 +1,7 @@
 Bin Text
 =========
 
-*Decode binary encoded data into aligned binary blobs using SIMD*
+*Encode and decodes binary encoded text into aligned binary blobs using SIMD*
 
 ![https://github.com/lassade/bintext/blob/main/.github/workflows/rust.yml](https://github.com/lassade/bintext/workflows/Build/badge.svg)
 

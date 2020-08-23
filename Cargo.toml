@@ -3,10 +3,10 @@ name = "bintext"
 version = "0.1.0"
 authors = ["lassade <felipe.jorge.pereira@gmail.com>"]
 edition = "2018"
-description = "Encoder and decoder of binary data for hex or base64 (wip) with support for SSE and AVX"
+description = "Encode and decodes binary encoded text into aligned binary blobs using SIMD"
 license = "MIT"
 documentation = "https://docs.rs/bintext/"
-#repository = "https://docs.rs/bintext/"
+repository = "https://github.com/lassade/bintext"
 
 [dependencies]
 
