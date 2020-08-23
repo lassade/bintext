@@ -7,6 +7,7 @@ description = "Encode and decodes binary encoded text into aligned binary blobs 
 license = "MIT"
 documentation = "https://docs.rs/bintext/"
 repository = "https://github.com/lassade/bintext"
+readme = "README.md"
 
 [dependencies]
 
