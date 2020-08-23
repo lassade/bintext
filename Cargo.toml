@@ -1,6 +1,6 @@
 [package]
 name = "bintext"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["lassade <felipe.jorge.pereira@gmail.com>"]
 edition = "2018"
 description = "Encode and decodes binary encoded text into aligned binary blobs using SIMD"
